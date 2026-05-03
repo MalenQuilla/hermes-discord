@@ -64,24 +64,12 @@ services:
       - "8642"
     volumes:
       # Master profile — gateway lives here
-      - ./hermes/master/config.yaml:/opt/data/config.yaml:ro
-      - ./hermes/master/SOUL.md:/opt/data/SOUL.md:ro
-      # Worker profiles — dispatcher reads these per task
-      - ./hermes/finance:/opt/data/profiles/finance:ro
-      - ./hermes/news:/opt/data/profiles/news:ro
-      - ./hermes/brain:/opt/data/profiles/brain:ro
-      - ./hermes/email:/opt/data/profiles/email:ro
-      - ./hermes/n8n-eng:/opt/data/profiles/n8n-eng:ro
-      - ./hermes/gh-eng:/opt/data/profiles/gh-eng:ro
-      - ./hermes/research:/opt/data/profiles/research:ro
-      # Shared hooks (skills mount removed — Hermes copies bundled skills
-      # into /opt/data/skills on boot; mount custom skills via runtime volume)
-      - ./hermes/shared/hooks:/opt/data/hooks:ro
+      - ./hermes:/opt/data
       # Runtime (mutable, not in git)
       - hermes-runtime:/opt/data/runtime
     deploy:
       resources:
-        limits: { memory: 4G, cpus: "2.0" }
+        limits: { memory: 8G, cpus: "3.0" }
     depends_on:
       n8n-mcp:
         condition: service_healthy
