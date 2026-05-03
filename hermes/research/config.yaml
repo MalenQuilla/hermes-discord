@@ -1,0 +1,46 @@
+profile_name: research
+role: kanban-worker
+
+llm:
+  provider: ${HERMES_PROVIDER}
+  model: ${HERMES_RESEARCH_MODEL:-${HERMES_WORKER_MODEL}}
+
+skills:
+  enabled:
+    - arxiv
+    - blogwatcher
+    - llm-wiki
+    - research-paper-writing
+    - youtube-content
+    - kanban-worker
+    - note-taking
+  config:
+    arxiv:
+      categories: [cs.AI, cs.LG, cs.SE, cs.DC, cs.CR, stat.ML]
+    research-paper-writing:
+      citation_style: inline-url
+
+terminal:
+  backend: local
+  cwd: /opt/data/runtime
+  timeout: 300
+  persistent_shell: true
+
+# Allow parallel sub-delegation for source fetches
+delegation:
+  max_iterations: 50
+  max_concurrent_children: 4
+  max_spawn_depth: 1
+  child_timeout_seconds: 300
+  provider: ${HERMES_PROVIDER}
+  model: ${HERMES_DELEGATION_MODEL}
+
+allowed_toolsets:
+  - terminal
+  - web
+  - mcp:obsidian-mcp
+  - delegation
+
+storage:
+  memories_dir: /opt/data/runtime/profiles/research/memories
+  sessions_dir: /opt/data/runtime/profiles/research/sessions

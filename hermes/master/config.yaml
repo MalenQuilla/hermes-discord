@@ -21,6 +21,7 @@ gateway:
         news: ${DISCORD_NEWS_CHANNEL_ID}
         brain: ${DISCORD_BRAIN_CHANNEL_ID}
         email: ${DISCORD_EMAIL_CHANNEL_ID}
+        research: ${DISCORD_RESEARCH_CHANNEL_ID}
       respond_to_mentions: true
       respond_to_dms: true
 

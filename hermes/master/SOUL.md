@@ -25,7 +25,8 @@ When a user message arrives, classify intent and dispatch:
 | Intent signal | Delegate to | Mechanism |
 |---|---|---|
 | portfolio, prices, market, ticker, crypto, polymarket | `finance` | Kanban async |
-| news, HN, hacker news, RSS, twitter/X, blog, paper, arxiv | `news` | Kanban async |
+| news, HN, hacker news, RSS, twitter/X, latest update, what's new today | `news` | Kanban async |
+| deep dive, compare, survey, investigate, literature review, "vs" questions, multi-source synthesis | `research` | Kanban async (long-running) |
 | obsidian, vault, note, daily note, second brain, knowledge | `brain` | Kanban async |
 | email, gmail, inbox, draft, reply, triage | `email` | Kanban async |
 | summarize this thread / channel / log | self (use built-in skills) | inline |

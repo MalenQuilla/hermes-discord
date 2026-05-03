@@ -14,6 +14,7 @@ x-hermes-base: &hermes-base
     DISCORD_NEWS_CHANNEL_ID: ${DISCORD_NEWS_CHANNEL_ID}
     DISCORD_BRAIN_CHANNEL_ID: ${DISCORD_BRAIN_CHANNEL_ID}
     DISCORD_EMAIL_CHANNEL_ID: ${DISCORD_EMAIL_CHANNEL_ID}
+    DISCORD_RESEARCH_CHANNEL_ID: ${DISCORD_RESEARCH_CHANNEL_ID}
     # n8n
     N8N_API_URL: http://n8n:5678
     N8N_API_KEY: ${N8N_API_KEY}
@@ -46,6 +47,7 @@ x-hermes-base: &hermes-base
     HERMES_EMAIL_MODEL: ${HERMES_EMAIL_MODEL}
     HERMES_N8N_ENG_MODEL: ${HERMES_N8N_ENG_MODEL}
     HERMES_GH_ENG_MODEL: ${HERMES_GH_ENG_MODEL}
+    HERMES_RESEARCH_MODEL: ${HERMES_RESEARCH_MODEL}
   networks: [hermes-net]
   extra_hosts:
     - "host.docker.internal:host-gateway"
@@ -69,6 +71,7 @@ services:
       - ./hermes/email:/opt/data/profiles/email:ro
       - ./hermes/n8n-eng:/opt/data/profiles/n8n-eng:ro
       - ./hermes/gh-eng:/opt/data/profiles/gh-eng:ro
+      - ./hermes/research:/opt/data/profiles/research:ro
       # Shared skills + hooks
       - ./hermes/shared/skills:/opt/data/skills:ro
       - ./hermes/shared/hooks:/opt/data/hooks:ro
