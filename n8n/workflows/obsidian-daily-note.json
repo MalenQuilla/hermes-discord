@@ -43,6 +43,5 @@
     "executionOrder": "v1",
     "timezone": "Asia/Ho_Chi_Minh"
   },
-  "active": false,
-  "tags": [{ "name": "hermes" }, { "name": "brain" }, { "name": "cron" }]
+  "active": false
 }

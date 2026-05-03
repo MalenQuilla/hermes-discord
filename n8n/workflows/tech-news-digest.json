@@ -46,6 +46,5 @@
     "executionOrder": "v1",
     "timezone": "Asia/Ho_Chi_Minh"
   },
-  "active": false,
-  "tags": [{ "name": "hermes" }, { "name": "news" }, { "name": "cron" }]
+  "active": false
 }
