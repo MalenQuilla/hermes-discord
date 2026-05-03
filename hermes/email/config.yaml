@@ -1,9 +1,9 @@
 profile_name: email
 role: kanban-worker
 
-llm:
+model:
   provider: ${HERMES_PROVIDER}
-  model: ${HERMES_EMAIL_MODEL:-${HERMES_WORKER_MODEL}}
+  default: ${HERMES_EMAIL_MODEL}
 
 skills:
   enabled:
@@ -20,7 +20,9 @@ skills:
 
 # Pre-tool hook enforces draft-only globally
 hooks:
-  pre_tool: /opt/data/hooks/pre_tool.sh
+  pre_tool_call:
+    - command: /opt/data/hooks/pre_tool.sh
+      timeout: 10
 
 allowed_toolsets:
   - mcp:google-workspace

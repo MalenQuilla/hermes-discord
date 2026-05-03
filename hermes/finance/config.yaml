@@ -1,9 +1,9 @@
 profile_name: finance
 role: kanban-worker
 
-llm:
+model:
   provider: ${HERMES_PROVIDER}
-  model: ${HERMES_FINANCE_MODEL:-${HERMES_WORKER_MODEL}}
+  default: ${HERMES_FINANCE_MODEL}
 
 skills:
   enabled:

@@ -1,9 +1,9 @@
 profile_name: gh-eng
 role: kanban-worker
 
-llm:
+model:
   provider: ${HERMES_PROVIDER}
-  model: ${HERMES_GH_ENG_MODEL:-${HERMES_WORKER_MODEL}}
+  default: ${HERMES_GH_ENG_MODEL}
 
 skills:
   enabled:

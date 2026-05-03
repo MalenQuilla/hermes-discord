@@ -18,6 +18,7 @@ x-hermes-base: &hermes-base
     # n8n
     N8N_API_URL: http://n8n:5678
     N8N_API_KEY: ${N8N_API_KEY}
+    N8N_MCP_AUTH_TOKEN: ${N8N_MCP_AUTH_TOKEN}
     # GitHub
     GITHUB_TOKEN: ${GITHUB_TOKEN}
     GITHUB_REPO: ${GITHUB_REPO}
@@ -41,13 +42,14 @@ x-hermes-base: &hermes-base
     HERMES_WORKER_MODEL: ${HERMES_WORKER_MODEL}
     HERMES_DELEGATION_MODEL: ${HERMES_DELEGATION_MODEL}
     HERMES_JUDGE_MODEL: ${HERMES_JUDGE_MODEL}
-    HERMES_FINANCE_MODEL: ${HERMES_FINANCE_MODEL}
-    HERMES_NEWS_MODEL: ${HERMES_NEWS_MODEL}
-    HERMES_BRAIN_MODEL: ${HERMES_BRAIN_MODEL}
-    HERMES_EMAIL_MODEL: ${HERMES_EMAIL_MODEL}
-    HERMES_N8N_ENG_MODEL: ${HERMES_N8N_ENG_MODEL}
-    HERMES_GH_ENG_MODEL: ${HERMES_GH_ENG_MODEL}
-    HERMES_RESEARCH_MODEL: ${HERMES_RESEARCH_MODEL}
+    HERMES_FINANCE_MODEL: ${HERMES_FINANCE_MODEL:-${HERMES_WORKER_MODEL}}
+    HERMES_NEWS_MODEL: ${HERMES_NEWS_MODEL:-${HERMES_WORKER_MODEL}}
+    HERMES_BRAIN_MODEL: ${HERMES_BRAIN_MODEL:-${HERMES_WORKER_MODEL}}
+    HERMES_EMAIL_MODEL: ${HERMES_EMAIL_MODEL:-${HERMES_WORKER_MODEL}}
+    HERMES_N8N_ENG_MODEL: ${HERMES_N8N_ENG_MODEL:-${HERMES_WORKER_MODEL}}
+    HERMES_GH_ENG_MODEL: ${HERMES_GH_ENG_MODEL:-${HERMES_WORKER_MODEL}}
+    HERMES_RESEARCH_MODEL: ${HERMES_RESEARCH_MODEL:-${HERMES_WORKER_MODEL}}
+    GATEWAY_ALLOW_ALL_USERS: ${GATEWAY_ALLOW_ALL_USERS:-true}
   networks: [hermes-net]
   extra_hosts:
     - "host.docker.internal:host-gateway"
@@ -59,7 +61,7 @@ services:
     container_name: hermes
     command: gateway run
     ports:
-      - "8642:8642"
+      - "8642"
     volumes:
       # Master profile — gateway lives here
       - ./hermes/master/config.yaml:/opt/data/config.yaml:ro
@@ -72,15 +74,19 @@ services:
       - ./hermes/n8n-eng:/opt/data/profiles/n8n-eng:ro
       - ./hermes/gh-eng:/opt/data/profiles/gh-eng:ro
       - ./hermes/research:/opt/data/profiles/research:ro
-      # Shared skills + hooks
-      - ./hermes/shared/skills:/opt/data/skills:ro
+      # Shared hooks (skills mount removed — Hermes copies bundled skills
+      # into /opt/data/skills on boot; mount custom skills via runtime volume)
       - ./hermes/shared/hooks:/opt/data/hooks:ro
       # Runtime (mutable, not in git)
       - hermes-runtime:/opt/data/runtime
     deploy:
       resources:
         limits: { memory: 4G, cpus: "2.0" }
-    depends_on: [n8n-mcp, obsidian-mcp]
+    depends_on:
+      n8n-mcp:
+        condition: service_healthy
+      obsidian-mcp:
+        condition: service_healthy
 
   # ─── Hermes Dashboard (Kanban UI) ───
   hermes-dashboard:
@@ -88,13 +94,15 @@ services:
     container_name: hermes-dashboard
     command: dashboard --host 0.0.0.0 --insecure
     ports:
-      - "9119:9119"
+      - "9119"
     environment:
       GATEWAY_HEALTH_URL: http://hermes:8642
     volumes:
       - ./hermes/master/config.yaml:/opt/data/config.yaml:ro
       - hermes-runtime:/opt/data/runtime
-    depends_on: [hermes]
+    depends_on:
+      hermes:
+        condition: service_started
 
   # ─── n8n: cron + workflow runtime ───
   n8n:
@@ -102,7 +110,7 @@ services:
     container_name: n8n
     restart: unless-stopped
     ports:
-      - "5678:5678"
+      - "5678"
     environment:
       DB_TYPE: postgresdb
       DB_POSTGRESDB_HOST: postgres
@@ -124,8 +132,16 @@ services:
       - ./scripts/n8n-import.sh:/docker-entrypoint-init.d/import.sh:ro
     entrypoint: ["/bin/sh", "-c"]
     command: ["sh /docker-entrypoint-init.d/import.sh & exec tini -- /docker-entrypoint.sh"]
-    depends_on: [postgres]
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks: [hermes-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:5678/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   # ─── n8n MCP server: programmatic workflow CRUD for n8n-eng agent ───
   n8n-mcp:
@@ -134,14 +150,24 @@ services:
     restart: unless-stopped
     environment:
       MCP_MODE: http
+      HOST: 0.0.0.0
       PORT: 3001
       N8N_API_URL: http://n8n:5678
       N8N_API_KEY: ${N8N_API_KEY}
+      AUTH_TOKEN: ${N8N_MCP_AUTH_TOKEN}
       LOG_LEVEL: info
     ports:
-      - "3001:3001"
+      - "3001"
     networks: [hermes-net]
-    depends_on: [n8n]
+    depends_on:
+      n8n:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider --header=\"Authorization: Bearer ${N8N_MCP_AUTH_TOKEN}\" http://127.0.0.1:3001/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   # ─── Obsidian MCP: bridge to host's Obsidian Local REST API plugin ───
   obsidian-mcp:
@@ -150,15 +176,23 @@ services:
     restart: unless-stopped
     environment:
       MCP_TRANSPORT_TYPE: http
+      MCP_HTTP_HOST: 0.0.0.0
       MCP_HTTP_PORT: 3002
       OBSIDIAN_BASE_URL: ${OBSIDIAN_API_URL}
       OBSIDIAN_API_KEY: ${OBSIDIAN_API_KEY}
       OBSIDIAN_VERIFY_SSL: "false"
     ports:
-      - "3002:3002"
+      - "3002"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks: [hermes-net]
+    healthcheck:
+      # Cyanheads obsidian-mcp doesn't expose a documented health route; the image has bun, not nc/curl.
+      test: ["CMD-SHELL", "bun -e 'const s=require(\"net\").connect(3002,\"127.0.0.1\",()=>process.exit(0)); s.on(\"error\",()=>process.exit(1)); setTimeout(()=>process.exit(1),3000);'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   # ─── Postgres (n8n state) ───
   postgres:

@@ -1,9 +1,9 @@
 # Hermes Master — Discord gateway + Kanban dispatcher
 profile_name: master
 
-llm:
+model:
   provider: ${HERMES_PROVIDER}
-  model: ${HERMES_MASTER_MODEL}
+  default: ${HERMES_MASTER_MODEL}
 
 # ─── Gateway: Discord ─────────────────────────────────────────────
 gateway:
@@ -68,8 +68,12 @@ checkpoints:
 
 # ─── Hooks ────────────────────────────────────────────────────────
 hooks:
-  pre_tool: /opt/data/hooks/pre_tool.sh
-  post_session: /opt/data/hooks/post_session.sh
+  pre_tool_call:
+    - command: /opt/data/hooks/pre_tool.sh
+      timeout: 10
+  on_session_end:
+    - command: /opt/data/hooks/post_session.sh
+      timeout: 10
 
 # ─── Skills allowed for master ────────────────────────────────────
 skills:
@@ -87,11 +91,11 @@ skills:
 # ─── MCP servers shared by all profiles ───────────────────────────
 mcp_servers:
   n8n-mcp:
-    transport: http
-    url: http://n8n-mcp:3001
+    url: http://n8n-mcp:3001/mcp
+    headers:
+      Authorization: Bearer ${N8N_MCP_AUTH_TOKEN}
   obsidian-mcp:
-    transport: http
-    url: http://obsidian-mcp:3002
+    url: http://obsidian-mcp:3002/mcp
   github:
     command: npx
     args: ["-y", "@modelcontextprotocol/server-github"]

@@ -1,9 +1,9 @@
 profile_name: n8n-eng
 role: kanban-worker
 
-llm:
+model:
   provider: ${HERMES_PROVIDER}
-  model: ${HERMES_N8N_ENG_MODEL:-${HERMES_WORKER_MODEL}}
+  default: ${HERMES_N8N_ENG_MODEL}
 
 skills:
   enabled:
