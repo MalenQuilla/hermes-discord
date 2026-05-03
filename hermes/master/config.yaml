@@ -2,8 +2,8 @@
 profile_name: master
 
 model:
-  provider: ${HERMES_PROVIDER}
-  default: ${HERMES_MASTER_MODEL}
+  provider: openrouter
+  default: google/gemini-3-flash-preview
 
 # ─── Gateway: Discord ─────────────────────────────────────────────
 gateway:
@@ -32,8 +32,8 @@ delegation:
   max_spawn_depth: 2
   orchestrator_enabled: true
   child_timeout_seconds: 600
-  provider: ${HERMES_PROVIDER}
-  model: ${HERMES_DELEGATION_MODEL}
+  provider: openrouter
+  model: google/gemini-3-flash-preview
 
 # ─── Kanban: durable cross-agent task board ──────────────────────
 kanban:
@@ -56,8 +56,8 @@ goals:
 
 auxiliary:
   goal_judge:
-    provider: ${HERMES_PROVIDER}
-    model: ${HERMES_JUDGE_MODEL}
+    provider: openrouter
+    model: google/gemini-3-flash-preview
 
 # ─── Checkpoints ──────────────────────────────────────────────────
 checkpoints:

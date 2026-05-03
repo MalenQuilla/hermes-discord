@@ -2,8 +2,8 @@ profile_name: brain
 role: kanban-worker
 
 model:
-  provider: ${HERMES_PROVIDER}
-  default: ${HERMES_BRAIN_MODEL}
+  provider: openrouter
+  default: anthropic/claude-sonnet-4-6
 
 skills:
   enabled:

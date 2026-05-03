@@ -2,8 +2,8 @@ profile_name: finance
 role: kanban-worker
 
 model:
-  provider: ${HERMES_PROVIDER}
-  default: ${HERMES_FINANCE_MODEL}
+  provider: openrouter
+  default: anthropic/claude-opus-4-7
 
 skills:
   enabled:

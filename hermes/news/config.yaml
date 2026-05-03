@@ -2,8 +2,8 @@ profile_name: news
 role: kanban-worker
 
 model:
-  provider: ${HERMES_PROVIDER}
-  default: ${HERMES_NEWS_MODEL}
+  provider: openrouter
+  default: google/gemini-3-flash-preview
 
 skills:
   enabled:

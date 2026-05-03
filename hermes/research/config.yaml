@@ -2,8 +2,8 @@ profile_name: research
 role: kanban-worker
 
 model:
-  provider: ${HERMES_PROVIDER}
-  default: ${HERMES_RESEARCH_MODEL}
+  provider: openrouter
+  default: anthropic/claude-opus-4-7
 
 skills:
   enabled:
@@ -32,8 +32,8 @@ delegation:
   max_concurrent_children: 4
   max_spawn_depth: 1
   child_timeout_seconds: 300
-  provider: ${HERMES_PROVIDER}
-  model: ${HERMES_DELEGATION_MODEL}
+  provider: openrouter
+  model: google/gemini-3-flash-preview
 
 allowed_toolsets:
   - terminal
