@@ -1,0 +1,31 @@
+profile_name: finance
+role: kanban-worker
+
+llm:
+  provider: ${HERMES_PROVIDER}
+  model: ${HERMES_FINANCE_MODEL:-${HERMES_WORKER_MODEL}}
+
+skills:
+  enabled:
+    - polymarket
+    - webhook-subscriptions
+    - kanban-worker
+    - note-taking
+  config:
+    polymarket: {}
+
+terminal:
+  backend: local
+  cwd: /opt/data/runtime
+  timeout: 60
+  persistent_shell: false
+
+# Restricted toolsets — no file writes, no delegation
+allowed_toolsets:
+  - terminal
+  - web
+  - mcp:polymarket
+
+storage:
+  memories_dir: /opt/data/runtime/profiles/finance/memories
+  sessions_dir: /opt/data/runtime/profiles/finance/sessions

@@ -1,0 +1,185 @@
+x-hermes-base: &hermes-base
+  image: nousresearch/hermes-agent:latest
+  restart: unless-stopped
+  environment:
+    # Providers
+    OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    OPENAI_API_KEY: ${OPENAI_API_KEY}
+    # Discord
+    DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+    DISCORD_GUILD_ID: ${DISCORD_GUILD_ID}
+    DISCORD_MASTER_CHANNEL_ID: ${DISCORD_MASTER_CHANNEL_ID}
+    DISCORD_FINANCE_CHANNEL_ID: ${DISCORD_FINANCE_CHANNEL_ID}
+    DISCORD_NEWS_CHANNEL_ID: ${DISCORD_NEWS_CHANNEL_ID}
+    DISCORD_BRAIN_CHANNEL_ID: ${DISCORD_BRAIN_CHANNEL_ID}
+    DISCORD_EMAIL_CHANNEL_ID: ${DISCORD_EMAIL_CHANNEL_ID}
+    # n8n
+    N8N_API_URL: http://n8n:5678
+    N8N_API_KEY: ${N8N_API_KEY}
+    # GitHub
+    GITHUB_TOKEN: ${GITHUB_TOKEN}
+    GITHUB_REPO: ${GITHUB_REPO}
+    GITHUB_ISSUE_LABEL: ${GITHUB_ISSUE_LABEL}
+    # Obsidian
+    OBSIDIAN_API_URL: ${OBSIDIAN_API_URL}
+    OBSIDIAN_API_KEY: ${OBSIDIAN_API_KEY}
+    # Gmail
+    GMAIL_CLIENT_ID: ${GMAIL_CLIENT_ID}
+    GMAIL_CLIENT_SECRET: ${GMAIL_CLIENT_SECRET}
+    GMAIL_REFRESH_TOKEN: ${GMAIL_REFRESH_TOKEN}
+    GMAIL_USER: ${GMAIL_USER}
+    EMAIL_DRAFT_ONLY: ${EMAIL_DRAFT_ONLY}
+    # Financial
+    ALPHA_VANTAGE_KEY: ${ALPHA_VANTAGE_KEY}
+    COINGECKO_API_KEY: ${COINGECKO_API_KEY}
+    # Tenant + tiered models
+    HERMES_TENANT: ${HERMES_TENANT}
+    HERMES_PROVIDER: ${HERMES_PROVIDER}
+    HERMES_MASTER_MODEL: ${HERMES_MASTER_MODEL}
+    HERMES_WORKER_MODEL: ${HERMES_WORKER_MODEL}
+    HERMES_DELEGATION_MODEL: ${HERMES_DELEGATION_MODEL}
+    HERMES_JUDGE_MODEL: ${HERMES_JUDGE_MODEL}
+    HERMES_FINANCE_MODEL: ${HERMES_FINANCE_MODEL}
+    HERMES_NEWS_MODEL: ${HERMES_NEWS_MODEL}
+    HERMES_BRAIN_MODEL: ${HERMES_BRAIN_MODEL}
+    HERMES_EMAIL_MODEL: ${HERMES_EMAIL_MODEL}
+    HERMES_N8N_ENG_MODEL: ${HERMES_N8N_ENG_MODEL}
+    HERMES_GH_ENG_MODEL: ${HERMES_GH_ENG_MODEL}
+  networks: [hermes-net]
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+services:
+  # ─── Hermes: master gateway + Kanban dispatcher (spawns workers in-process) ───
+  hermes:
+    <<: *hermes-base
+    container_name: hermes
+    command: gateway run
+    ports:
+      - "8642:8642"
+    volumes:
+      # Master profile — gateway lives here
+      - ./hermes/master/config.yaml:/opt/data/config.yaml:ro
+      - ./hermes/master/SOUL.md:/opt/data/SOUL.md:ro
+      # Worker profiles — dispatcher reads these per task
+      - ./hermes/finance:/opt/data/profiles/finance:ro
+      - ./hermes/news:/opt/data/profiles/news:ro
+      - ./hermes/brain:/opt/data/profiles/brain:ro
+      - ./hermes/email:/opt/data/profiles/email:ro
+      - ./hermes/n8n-eng:/opt/data/profiles/n8n-eng:ro
+      - ./hermes/gh-eng:/opt/data/profiles/gh-eng:ro
+      # Shared skills + hooks
+      - ./hermes/shared/skills:/opt/data/skills:ro
+      - ./hermes/shared/hooks:/opt/data/hooks:ro
+      # Runtime (mutable, not in git)
+      - hermes-runtime:/opt/data/runtime
+    deploy:
+      resources:
+        limits: { memory: 4G, cpus: "2.0" }
+    depends_on: [n8n-mcp, obsidian-mcp]
+
+  # ─── Hermes Dashboard (Kanban UI) ───
+  hermes-dashboard:
+    <<: *hermes-base
+    container_name: hermes-dashboard
+    command: dashboard --host 0.0.0.0 --insecure
+    ports:
+      - "9119:9119"
+    environment:
+      GATEWAY_HEALTH_URL: http://hermes:8642
+    volumes:
+      - ./hermes/master/config.yaml:/opt/data/config.yaml:ro
+      - hermes-runtime:/opt/data/runtime
+    depends_on: [hermes]
+
+  # ─── n8n: cron + workflow runtime ───
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_DATABASE: n8n
+      DB_POSTGRESDB_USER: n8n
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASS}
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: ${N8N_USER}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_PASS}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL}
+      GENERIC_TIMEZONE: Asia/Ho_Chi_Minh
+      TZ: Asia/Ho_Chi_Minh
+      N8N_LOG_LEVEL: info
+      N8N_DIAGNOSTICS_ENABLED: "false"
+    volumes:
+      - n8n-data:/home/node/.n8n
+      - ./n8n/workflows:/workflows:ro
+      - ./scripts/n8n-import.sh:/docker-entrypoint-init.d/import.sh:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["sh /docker-entrypoint-init.d/import.sh & exec tini -- /docker-entrypoint.sh"]
+    depends_on: [postgres]
+    networks: [hermes-net]
+
+  # ─── n8n MCP server: programmatic workflow CRUD for n8n-eng agent ───
+  n8n-mcp:
+    image: ghcr.io/czlonkowski/n8n-mcp:latest
+    container_name: n8n-mcp
+    restart: unless-stopped
+    environment:
+      MCP_MODE: http
+      PORT: 3001
+      N8N_API_URL: http://n8n:5678
+      N8N_API_KEY: ${N8N_API_KEY}
+      LOG_LEVEL: info
+    ports:
+      - "3001:3001"
+    networks: [hermes-net]
+    depends_on: [n8n]
+
+  # ─── Obsidian MCP: bridge to host's Obsidian Local REST API plugin ───
+  obsidian-mcp:
+    image: ghcr.io/cyanheads/obsidian-mcp-server:latest
+    container_name: obsidian-mcp
+    restart: unless-stopped
+    environment:
+      MCP_TRANSPORT_TYPE: http
+      MCP_HTTP_PORT: 3002
+      OBSIDIAN_BASE_URL: ${OBSIDIAN_API_URL}
+      OBSIDIAN_API_KEY: ${OBSIDIAN_API_KEY}
+      OBSIDIAN_VERIFY_SSL: "false"
+    ports:
+      - "3002:3002"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks: [hermes-net]
+
+  # ─── Postgres (n8n state) ───
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: n8n
+      POSTGRES_PASSWORD: ${POSTGRES_PASS}
+      POSTGRES_DB: n8n
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks: [hermes-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U n8n"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  hermes-net:
+    driver: bridge
+
+volumes:
+  hermes-runtime:
+  n8n-data:
+  postgres-data:

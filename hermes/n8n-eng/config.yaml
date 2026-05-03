@@ -1,0 +1,27 @@
+profile_name: n8n-eng
+role: kanban-worker
+
+llm:
+  provider: ${HERMES_PROVIDER}
+  model: ${HERMES_N8N_ENG_MODEL:-${HERMES_WORKER_MODEL}}
+
+skills:
+  enabled:
+    - webhook-subscriptions
+    - kanban-worker
+    - note-taking
+
+# n8n-eng has access to n8n MCP server only — cannot touch other systems
+allowed_toolsets:
+  - mcp:n8n-mcp
+  - file  # to write workflow JSON to /workflows for replay
+
+# Mount n8n workflows dir RW so generated workflows persist to git
+mounts:
+  - source: ./n8n/workflows
+    target: /workflows
+    mode: rw
+
+storage:
+  memories_dir: /opt/data/runtime/profiles/n8n-eng/memories
+  sessions_dir: /opt/data/runtime/profiles/n8n-eng/sessions

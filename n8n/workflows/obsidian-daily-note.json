@@ -1,0 +1,48 @@
+{
+  "name": "Obsidian Daily Note",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 22 * * *" }]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_WEBHOOK_URL || 'http://hermes:8642' }}/api/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"channel\": \"brain\",\n  \"message\": \"Create or update daily note for today. Sections: Summary (what was accomplished across all agents), Tasks completed, Open items, Notes to self. Pull from today's Kanban history + Discord threads. Write to Daily/<YYYY-MM-DD>.md.\",\n  \"profile\": \"master\",\n  \"metadata\": { \"source\": \"n8n-cron\", \"workflow\": \"obsidian-daily-note\" }\n}"
+      },
+      "name": "Trigger Hermes Brain",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [470, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [{ "node": "Trigger Hermes Brain", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Ho_Chi_Minh"
+  },
+  "active": false,
+  "tags": [{ "name": "hermes" }, { "name": "brain" }, { "name": "cron" }]
+}

@@ -1,0 +1,30 @@
+profile_name: email
+role: kanban-worker
+
+llm:
+  provider: ${HERMES_PROVIDER}
+  model: ${HERMES_EMAIL_MODEL:-${HERMES_WORKER_MODEL}}
+
+skills:
+  enabled:
+    - google-workspace
+    - kanban-worker
+  config:
+    google-workspace:
+      gmail:
+        client_id: ${GMAIL_CLIENT_ID}
+        client_secret: ${GMAIL_CLIENT_SECRET}
+        refresh_token: ${GMAIL_REFRESH_TOKEN}
+        user: ${GMAIL_USER}
+        draft_only: ${EMAIL_DRAFT_ONLY}
+
+# Pre-tool hook enforces draft-only globally
+hooks:
+  pre_tool: /opt/data/hooks/pre_tool.sh
+
+allowed_toolsets:
+  - mcp:google-workspace
+
+storage:
+  memories_dir: /opt/data/runtime/profiles/email/memories
+  sessions_dir: /opt/data/runtime/profiles/email/sessions

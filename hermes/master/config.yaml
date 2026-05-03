@@ -1,0 +1,107 @@
+# Hermes Master — Discord gateway + Kanban dispatcher
+profile_name: master
+
+llm:
+  provider: ${HERMES_PROVIDER}
+  model: ${HERMES_MASTER_MODEL}
+
+# ─── Gateway: Discord ─────────────────────────────────────────────
+gateway:
+  enabled: true
+  host: 0.0.0.0
+  port: 8642
+  platforms:
+    discord:
+      enabled: true
+      bot_token: ${DISCORD_BOT_TOKEN}
+      guild_id: ${DISCORD_GUILD_ID}
+      channels:
+        master: ${DISCORD_MASTER_CHANNEL_ID}
+        finance: ${DISCORD_FINANCE_CHANNEL_ID}
+        news: ${DISCORD_NEWS_CHANNEL_ID}
+        brain: ${DISCORD_BRAIN_CHANNEL_ID}
+        email: ${DISCORD_EMAIL_CHANNEL_ID}
+      respond_to_mentions: true
+      respond_to_dms: true
+
+# ─── Delegation: parallel sync fork-join ──────────────────────────
+delegation:
+  max_iterations: 50
+  max_concurrent_children: 4
+  max_spawn_depth: 2
+  orchestrator_enabled: true
+  child_timeout_seconds: 600
+  provider: ${HERMES_PROVIDER}
+  model: ${HERMES_DELEGATION_MODEL}
+
+# ─── Kanban: durable cross-agent task board ──────────────────────
+kanban:
+  enabled: true
+  dispatch_in_gateway: true
+  dispatch_interval_seconds: 30
+  profiles_dir: /opt/data/profiles
+  default_tenant: ${HERMES_TENANT}
+
+dashboard:
+  kanban:
+    default_tenant: ${HERMES_TENANT}
+    lane_by_profile: true
+    include_archived_by_default: false
+    render_markdown: true
+
+# ─── Goals (Ralph-loop autocontinuation) ──────────────────────────
+goals:
+  max_turns: 10
+
+auxiliary:
+  goal_judge:
+    provider: ${HERMES_PROVIDER}
+    model: ${HERMES_JUDGE_MODEL}
+
+# ─── Checkpoints ──────────────────────────────────────────────────
+checkpoints:
+  enabled: true
+  max_snapshots: 30
+  retention_days: 14
+  delete_orphans: true
+
+# ─── Hooks ────────────────────────────────────────────────────────
+hooks:
+  pre_tool: /opt/data/hooks/pre_tool.sh
+  post_session: /opt/data/hooks/post_session.sh
+
+# ─── Skills allowed for master ────────────────────────────────────
+skills:
+  enabled:
+    - delegation
+    - kanban-orchestrator
+    - github-issues
+    - note-taking
+  config:
+    github-issues:
+      repo: ${GITHUB_REPO}
+      default_label: ${GITHUB_ISSUE_LABEL}
+  guard_agent_created: true
+
+# ─── MCP servers shared by all profiles ───────────────────────────
+mcp_servers:
+  n8n-mcp:
+    transport: http
+    url: http://n8n-mcp:3001
+  obsidian-mcp:
+    transport: http
+    url: http://obsidian-mcp:3002
+  github:
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-github"]
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_TOKEN}
+
+# ─── Storage paths (split static vs runtime) ─────────────────────
+storage:
+  memories_dir: /opt/data/runtime/memories
+  sessions_dir: /opt/data/runtime/sessions
+  kanban_db: /opt/data/runtime/kanban.db
+  checkpoints_dir: /opt/data/runtime/checkpoints
+  logs_dir: /opt/data/runtime/logs
+  auth_file: /opt/data/runtime/auth.json

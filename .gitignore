@@ -1,0 +1,22 @@
+.env
+*.local
+.DS_Store
+
+# Hermes runtime — never commit
+hermes/**/runtime/
+hermes/**/memories/
+hermes/**/sessions/
+hermes/**/checkpoints/
+hermes/**/logs/
+hermes/**/auth.json
+hermes/**/kanban.db*
+
+# n8n runtime
+n8n/data/
+n8n/.cache/
+
+# Postgres data
+postgres-data/
+
+# Backups
+backups/
