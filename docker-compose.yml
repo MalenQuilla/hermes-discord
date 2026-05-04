@@ -156,32 +156,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-
-  # ─── Obsidian MCP: bridge to host's Obsidian Local REST API plugin ───
-  obsidian-mcp:
-    image: ghcr.io/cyanheads/obsidian-mcp-server:latest
-    container_name: obsidian-mcp
-    restart: unless-stopped
-    environment:
-      MCP_TRANSPORT_TYPE: http
-      MCP_HTTP_HOST: 0.0.0.0
-      MCP_HTTP_PORT: 3002
-      OBSIDIAN_BASE_URL: ${OBSIDIAN_API_URL}
-      OBSIDIAN_API_KEY: ${OBSIDIAN_API_KEY}
-      OBSIDIAN_VERIFY_SSL: "false"
-    ports:
-      - "3002"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    networks: [hermes-net]
-    healthcheck:
-      # Cyanheads obsidian-mcp doesn't expose a documented health route; the image has bun, not nc/curl.
-      test: ["CMD-SHELL", "bun -e 'const s=require(\"net\").connect(3002,\"127.0.0.1\",()=>process.exit(0)); s.on(\"error\",()=>process.exit(1)); setTimeout(()=>process.exit(1),3000);'"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
+      
   # ─── Postgres (n8n state) ───
   postgres:
     image: postgres:16-alpine
