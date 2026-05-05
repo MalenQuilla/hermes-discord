@@ -94,9 +94,7 @@ mcp_servers:
     url: http://n8n-mcp:3001/mcp
     headers:
       Authorization: Bearer ${N8N_MCP_AUTH_TOKEN}
-  obsidian-mcp:
-    url: http://obsidian-mcp:3002/mcp
-  github:
+    github:
     command: npx
     args: ["-y", "@modelcontextprotocol/server-github"]
     env:

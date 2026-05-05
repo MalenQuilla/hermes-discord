@@ -23,9 +23,6 @@ x-hermes-base: &hermes-base
     GITHUB_TOKEN: ${GITHUB_TOKEN}
     GITHUB_REPO: ${GITHUB_REPO}
     GITHUB_ISSUE_LABEL: ${GITHUB_ISSUE_LABEL}
-    # Obsidian
-    OBSIDIAN_API_URL: ${OBSIDIAN_API_URL}
-    OBSIDIAN_API_KEY: ${OBSIDIAN_API_KEY}
     # Gmail
     GMAIL_CLIENT_ID: ${GMAIL_CLIENT_ID}
     GMAIL_CLIENT_SECRET: ${GMAIL_CLIENT_SECRET}
@@ -42,13 +39,6 @@ x-hermes-base: &hermes-base
     HERMES_WORKER_MODEL: ${HERMES_WORKER_MODEL}
     HERMES_DELEGATION_MODEL: ${HERMES_DELEGATION_MODEL}
     HERMES_JUDGE_MODEL: ${HERMES_JUDGE_MODEL}
-    HERMES_FINANCE_MODEL: ${HERMES_FINANCE_MODEL}
-    HERMES_NEWS_MODEL: ${HERMES_NEWS_MODEL}
-    HERMES_BRAIN_MODEL: ${HERMES_BRAIN_MODEL}
-    HERMES_EMAIL_MODEL: ${HERMES_EMAIL_MODEL}
-    HERMES_N8N_ENG_MODEL: ${HERMES_N8N_ENG_MODEL}
-    HERMES_GH_ENG_MODEL: ${HERMES_GH_ENG_MODEL}
-    HERMES_RESEARCH_MODEL: ${HERMES_RESEARCH_MODEL}
     GATEWAY_ALLOW_ALL_USERS: ${GATEWAY_ALLOW_ALL_USERS:-true}
   networks: [hermes-net]
   extra_hosts:
@@ -73,8 +63,6 @@ services:
     depends_on:
       n8n-mcp:
         condition: service_healthy
-      obsidian-mcp:
-        condition: service_healthy
 
   # ─── Hermes Dashboard (Kanban UI) ───
   hermes-dashboard:
@@ -86,7 +74,7 @@ services:
     environment:
       GATEWAY_HEALTH_URL: http://hermes:8642
     volumes:
-      - ./hermes/master/config.yaml:/opt/data/config.yaml:ro
+      - ./hermes/config.yaml:/opt/data/config.yaml:ro
       - hermes-runtime:/opt/data/runtime
     depends_on:
       hermes:
@@ -116,16 +104,20 @@ services:
       N8N_DIAGNOSTICS_ENABLED: "false"
     volumes:
       - n8n-data:/home/node/.n8n
-      - ./n8n/workflows:/workflows:ro
-      - ./scripts/n8n-import.sh:/docker-entrypoint-init.d/import.sh:ro
-    entrypoint: ["/bin/sh", "-c"]
-    command: ["sh /docker-entrypoint-init.d/import.sh & exec tini -- /docker-entrypoint.sh"]
+      # - ./n8n/workflows:/workflows:ro
+      # - ./scripts/n8n-import.sh:/docker-entrypoint-init.d/import.sh:ro
+    # entrypoint: ["/bin/sh", "-c"]
+    # command: ["sh /docker-entrypoint-init.d/import.sh & exec tini -- /docker-entrypoint.sh"]
     depends_on:
       postgres:
         condition: service_healthy
     networks: [hermes-net]
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:5678/healthz || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q --spider http://localhost:5678/healthz || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -151,12 +143,16 @@ services:
       n8n:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider --header=\"Authorization: Bearer ${N8N_MCP_AUTH_TOKEN}\" http://127.0.0.1:3001/health || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          'wget -q --spider --header="Authorization: Bearer ${N8N_MCP_AUTH_TOKEN}" http://127.0.0.1:3001/health || exit 1',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
-      
+
   # ─── Postgres (n8n state) ───
   postgres:
     image: postgres:16-alpine
