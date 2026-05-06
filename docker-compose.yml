@@ -64,6 +64,21 @@ services:
       n8n-mcp:
         condition: service_healthy
 
+  # ─── Laura: guest research assistant ───
+  laura:
+    <<: *hermes-base
+    container_name: laura
+    command: gateway run --profile guest
+    environment:
+      # Use the guest-specific var defined in SOUL
+      DISCORD_BOT_TOKEN: ${DISCORD_GUEST_TOKEN}
+    volumes:
+      - ./hermes:/opt/data
+      - hermes-runtime:/opt/data/runtime
+    depends_on:
+      hermes:
+        condition: service_started
+
   # ─── Hermes Dashboard (Kanban UI) ───
   hermes-dashboard:
     <<: *hermes-base

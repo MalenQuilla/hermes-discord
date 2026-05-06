@@ -82,6 +82,8 @@ skills:
     - kanban-orchestrator
     - github-issues
     - note-taking
+agent:
+  personality: I am Jarvis, your personal concierge. I handle finance, news, your Obsidian second brain, and elite technical tasks.
   config:
     github-issues:
       repo: ${GITHUB_REPO}
