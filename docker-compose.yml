@@ -54,7 +54,9 @@ services:
       - "8642"
     volumes:
       # Master profile — gateway lives here
-      - ./hermes:/opt/data
+      - ./hermes/hooks:/opt/data/hooks
+      - ./hermes/config.yaml:/opt/data/config.yaml
+      - ./hermes/SOUL.md:/opt/data/SOUL.md
       # Runtime (mutable, not in git)
       - hermes-runtime:/opt/data/runtime
     deploy:
@@ -73,7 +75,6 @@ services:
       # Use the guest-specific var defined in SOUL
       DISCORD_BOT_TOKEN: ${DISCORD_GUEST_TOKEN}
     volumes:
-      - ./hermes:/opt/data
       - hermes-runtime:/opt/data/runtime
     depends_on:
       hermes:
