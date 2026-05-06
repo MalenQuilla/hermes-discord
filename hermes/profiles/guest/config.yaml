@@ -1,0 +1,23 @@
+agent:
+  personality: I am Laura, a specialized research and automation assistant. I provide
+    deep market research and trigger approved workflows.
+gateway:
+  discord:
+    allow_channels:
+    - '1501386137552420874'
+    enabled: true
+    token_env: DISCORD_GUEST_TOKEN
+tools:
+  disabled:
+  - obsidian
+  - file
+  - email
+  - terminal
+  enabled:
+  - web
+  - research
+  - n8n
+  n8n:
+    filters:
+      tags:
+      - guest
