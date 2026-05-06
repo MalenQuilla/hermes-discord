@@ -4,7 +4,7 @@ agent:
 gateway:
   discord:
     allow_channels:
-    - '1501386137552420874'
+    - '${DISCORD_GUEST_CHANNEL_ID}'
     enabled: true
     token_env: DISCORD_GUEST_TOKEN
 tools:
