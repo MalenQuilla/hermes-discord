@@ -107,9 +107,9 @@ mcp_servers:
 
 # ─── Storage paths (split static vs runtime) ─────────────────────
 storage:
-  memories_dir: /opt/data/runtime/memories
-  sessions_dir: /opt/data/runtime/sessions
-  kanban_db: /opt/data/runtime/kanban.db
-  checkpoints_dir: /opt/data/runtime/checkpoints
-  logs_dir: /opt/data/runtime/logs
-  auth_file: /opt/data/runtime/auth.json
+  memories_dir: /opt/data/memories
+  sessions_dir: /opt/data/sessions
+  kanban_db: /opt/data/kanban.db
+  checkpoints_dir: /opt/data/checkpoints
+  logs_dir: /opt/data/logs
+  auth_file: /opt/data/auth.json
